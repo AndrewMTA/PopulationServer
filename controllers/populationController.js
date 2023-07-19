@@ -1,24 +1,28 @@
-const db = require('../config/database.js'); 
+const db = require('../config/database.js');
 
 async function getPopulation(request, reply) {
   const { state, city } = request.params;
   try {
     const doc = await new Promise((resolve, reject) => {
       db.findOne({ state: state.toLowerCase(), city: city.toLowerCase() }, (err, doc) => {
-        if (err || !doc) {
+        if (err) {
+          console.error('Error finding document:', err);
           reject(err);
         } else {
+          console.log('Document found:', doc);
           resolve(doc);
         }
       });
     });
 
     if (!doc) {
+      
       reply.code(404).send({ error: 'State / city combo not found' });
     } else {
       reply.send({ population: doc.population });
     }
   } catch (err) {
+
     reply.code(500).send({ error: 'Internal Server Error' });
   }
 }
@@ -40,8 +44,10 @@ async function updatePopulation(request, reply) {
         { upsert: true, returnUpdatedDocs: true },
         (err, numAffected, affectedDocuments) => {
           if (err) {
+         
             reject(err);
           } else {
+            console.log('Update result:', numAffected, affectedDocuments);
             resolve(numAffected === 1 ? affectedDocuments : numAffected);
           }
         }
@@ -56,7 +62,8 @@ async function updatePopulation(request, reply) {
       reply.code(400).send({ error: 'Data could not be retrieved' });
     }
   } catch (err) {
-    reply.code(400).send({ error: 'Data could not be added' });
+   
+    reply.code(500).send({ error: 'Data could not be added' });
   }
 }
 
